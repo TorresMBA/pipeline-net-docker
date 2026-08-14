@@ -10,5 +10,17 @@ pipeline {
                 sh 'docker --version'
             }
         }
+
+        stage('Build') {
+            steps {
+                sh 'dotnet build'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'dotnet test'
+            }
+        }
     }
 }
