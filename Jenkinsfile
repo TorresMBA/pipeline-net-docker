@@ -53,15 +53,51 @@ pipeline {
 	}	
 	stage('Health Check') {
 	    steps {
-	        sh '''
-	            echo "Waiting for application..."
+	        script {
+            try {
+                sh '''
+                    echo "Waiting for application..."
+                    sleep 3
 
-	            sleep 3
+                    curl --fail http://localhost:8082/health
 
-	            curl --fail http://localhost:8082/health
+                    echo "Health Check OK"
+                '''
 
-	            echo "Health Check OK"
-	        '''
+            } catch (Exception e) {
+
+                echo "❌ Health Check FAILED"
+                echo "Starting automatic rollback..."
+
+                def previousBuild = currentBuild.previousSuccessfulBuild
+
+                if (previousBuild == null) {
+                    error "No previous successful build available for rollback"
+                }
+
+                def previousTag = previousBuild.number.toString()
+
+                echo "Rolling back to mercury:${previousTag}"
+
+                sh """
+                    docker rm -f mercury-api || true
+
+                    docker run -d \
+                        --name mercury-api \
+                        -p 8082:8080 \
+                        ${APP_NAME}:${previousTag}
+
+                    echo "Waiting for rollback application..."
+                    sleep 3
+
+                    curl --fail http://localhost:8082/health
+                """
+
+                echo "✅ Rollback successful: mercury:${previousTag}"
+
+                throw e
+            }
+        }		
 	    }
 	}	
     }
