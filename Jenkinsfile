@@ -46,32 +46,66 @@ pipeline {
 		}
 		stage('Docker Deploy') {
 		    steps {
-		        sh 'docker rm -f mercury-api || true'
-		        sh 'docker run -d --name mercury-api -p 8082:8080 ${APP_NAME}:${IMAGE_TAG}'
-			sh 'docker ps --filter name=mercury-api'
+		        sh '''
+		            echo "Deploying GREEN..."
+		
+		            docker rm -f mercury-green || true
+		
+		            docker run -d \
+		                --name mercury-green \
+		                -p 8083:8080 \
+		                ${APP_NAME}:${IMAGE_TAG}
+		        '''
 		    }
-		}	
-		stage('Health Check') {
+		}
+
+		stage('Health Check GREEN') {
 		    steps {
 		        script {
 		            try {
 		                sh '''
-		                    echo "Waiting for application..."
 		                    sleep 3
-		
-		                    curl --fail http://localhost:8082/health
-		
-		                    echo "Health Check OK"
-		                '''		
+		                    curl --fail http://localhost:8083/health
+		                '''
 		            } catch (Exception e) {
 		
-		                echo "❌ Health Check FAILED"
-		                echo "Starting automatic rollback..."
+		                sh 'docker rm -f mercury-green || true'
+		
+		                error "GREEN deployment failed"
+		            }
+		        }
+		    }
+		}
+
+		stage('Switch to GREEN') {
+		    steps {
+		        sh '''
+		            docker rm -f mercury-api || true
+		
+		            docker run -d \
+		                --name mercury-api \
+		                -p 8082:8080 \
+		                ${APP_NAME}:${IMAGE_TAG}
+		
+		            docker rm -f mercury-green || true
+		        '''
+		    }
+		}
+
+		stage('Health Check Production') {
+		    steps {
+		        script {
+		            try {
+		                sh '''
+		                    sleep 3
+		                    curl --fail http://localhost:8082/health
+		                '''
+		            } catch (Exception e) {
 		
 		                def previousBuild = currentBuild.previousSuccessfulBuild
 		
 		                if (previousBuild == null) {
-		                    error "No previous successful build available for rollback"
+		                    error "No previous successful build available"
 		                }
 		
 		                def previousTag = previousBuild.number.toString()
@@ -86,18 +120,15 @@ pipeline {
 		                        -p 8082:8080 \
 		                        ${APP_NAME}:${previousTag}
 		
-		                    echo "Waiting for rollback application..."
 		                    sleep 3
 		
 		                    curl --fail http://localhost:8082/health
 		                """
 		
-		                echo "✅ Rollback successful: mercury:${previousTag}"
-		
 		                throw e
 		            }
 		        }
-	    	}
+		    }
 		}
 	}
 }
