@@ -51,5 +51,18 @@ pipeline {
 		sh 'docker ps --filter name=mercury-api'
 	    }
 	}	
+	stage('Health Check') {
+	    steps {
+	        sh '''
+	            echo "Waiting for application..."
+
+	            sleep 3
+
+	            curl --fail http://localhost:8082/health
+
+	            echo "Health Check OK"
+	        '''
+	    }
+	}	
     }
 }
