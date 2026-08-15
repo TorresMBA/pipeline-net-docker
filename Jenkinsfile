@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+	APP_NAME = 'mercury'
+	IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+
     stages {
 
         stage('Environment') {
@@ -42,7 +47,7 @@ pipeline {
 	stage('Docker Deploy') {
 	    steps {
 	        sh 'docker rm -f mercury-api || true'
-	        sh 'docker run -d --name mercury-api -p 8082:8080 docker-demo:latest'
+	        sh 'docker run -d --name mercury-api -p 8082:8080 docker-demo:${IMAGE_TAG}'
 		sh 'docker ps --filter name=mercury-api'
 	    }
 	}	
