@@ -41,13 +41,13 @@ pipeline {
         }
 	stage('Docker Build'){
 	    steps {
-		sh 'docker build -t docker-demo:${IMAGE_TAG} .'
+		sh 'docker build -t ${APP_NAME}:${IMAGE_TAG} .'
 	    }
 	}
 	stage('Docker Deploy') {
 	    steps {
 	        sh 'docker rm -f mercury-api || true'
-	        sh 'docker run -d --name mercury-api -p 8082:8080 docker-demo:${IMAGE_TAG}'
+	        sh 'docker run -d --name mercury-api -p 8082:8080 ${APP_NAME}:${IMAGE_TAG}'
 		sh 'docker ps --filter name=mercury-api'
 	    }
 	}	
