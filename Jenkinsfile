@@ -34,6 +34,26 @@ pipeline {
             }
         }
 
+		stage('SonarQube Analysis') {
+		    steps {
+		        withSonarQubeEnv('SonarQube') {
+		            sh '''
+		                sonar-scanner \
+		                  -Dsonar.projectKey=pipeline-net-docker \
+		                  -Dsonar.sources=.
+		            '''
+		        }
+		    }
+		}
+
+		stage('Quality Gate') {
+		    steps {
+		        timeout(time: 5, unit: 'MINUTES') {
+		            waitForQualityGate abortPipeline: true
+		        }
+		    }
+		}
+		
         stage('Publish') {
             steps {
                 sh 'dotnet publish -c Release -o ./publish --no-build --no-restore'
