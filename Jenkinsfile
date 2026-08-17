@@ -10,13 +10,28 @@ pipeline {
     stages {
 
         stage('Environment') {
-            steps {
+             steps {
                 sh 'whoami'
                 sh 'dotnet --version'
+                sh 'dotnet sonarscanner --version'
                 sh 'docker --version'
             }
         }
 
+		stage('SonarQube Begin') {
+		    steps {
+		        withSonarQubeEnv('SonarQube') {
+		            sh '''
+		                dotnet sonarscanner begin \
+		                    /k:"pipeline-net-docker" \
+		                    /n:"Mercury API" \
+		                    /v:"${BUILD_NUMBER}" \
+		                    /d:sonar.token="${SONAR_TOKEN}"
+		            '''
+		        }
+		    }
+		}
+		
         stage('Restore') {
             steps {
                 sh 'dotnet restore'
@@ -35,13 +50,12 @@ pipeline {
             }
         }
 
-		stage('SonarQube Analysis') {
+		stage('SonarQube End') {
 		    steps {
 		        withSonarQubeEnv('SonarQube') {
 		            sh '''
-		                sonar-scanner \
-		                  -Dsonar.projectKey=pipeline-net-docker \
-		                  -Dsonar.sources=.
+		                dotnet sonarscanner end \
+		                    /d:sonar.token="${SONAR_TOKEN}"
 		            '''
 		        }
 		    }
