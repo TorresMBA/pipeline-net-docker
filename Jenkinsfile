@@ -17,6 +17,29 @@ pipeline {
             }
         }
 
+		stage('Test Sonar Environment') {
+		    steps {
+		        withSonarQubeEnv('SonarQube') {
+		            sh '''
+		                test -n "$SONAR_AUTH_TOKEN" && echo "SONAR_AUTH_TOKEN existe"
+		                echo "SONAR_HOST_URL=$SONAR_HOST_URL"
+		            '''
+		        }
+		    }
+		}
+		
+		stage('Test SonarQube API') {
+		    steps {
+		        withSonarQubeEnv('SonarQube') {
+		            sh '''
+		                curl --fail \
+		                    -H "Authorization: Bearer ${SONAR_AUTH_TOKEN}" \
+		                    "${SONAR_HOST_URL}/api/rules/search?ps=1"
+		            '''
+		        }
+		    }
+		}
+		
 		stage('SonarQube Begin') {
 		    steps {
 		        withSonarQubeEnv('SonarQube') {
