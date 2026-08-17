@@ -13,7 +13,6 @@ pipeline {
              steps {
                 sh 'whoami'
                 sh 'dotnet --version'
-                sh 'dotnet sonarscanner --version'
                 sh 'docker --version'
             }
         }
@@ -26,7 +25,7 @@ pipeline {
 		                    /k:"pipeline-net-docker" \
 		                    /n:"Mercury API" \
 		                    /v:"${BUILD_NUMBER}" \
-		                    /d:sonar.token="${SONAR_TOKEN}"
+                    		/d:sonar.token="${SONAR_AUTH_TOKEN}"
 		            '''
 		        }
 		    }
