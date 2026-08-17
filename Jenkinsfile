@@ -43,13 +43,20 @@ pipeline {
 		stage('SonarQube Begin') {
 		    steps {
 		        withSonarQubeEnv('SonarQube') {
-		            sh '''
-		                dotnet sonarscanner begin \
-		                    /k:"pipeline-net-docker" \
-		                    /n:"Mercury API" \
-		                    /v:"${BUILD_NUMBER}" \
-                    		/d:sonar.token="${SONAR_AUTH_TOKEN}"
-		            '''
+		            withCredentials([
+		                string(
+		                    credentialsId: 'sonarqube-token',
+		                    variable: 'SONAR_TOKEN'
+		                )
+		            ]) {
+		                sh '''
+		                    dotnet sonarscanner begin \
+		                        /k:"pipeline-net-docker" \
+		                        /n:"Mercury API" \
+		                        /v:"${BUILD_NUMBER}" \
+		                        /d:sonar.token="${SONAR_TOKEN}"
+		                '''
+		            }
 		        }
 		    }
 		}
@@ -75,10 +82,17 @@ pipeline {
 		stage('SonarQube End') {
 		    steps {
 		        withSonarQubeEnv('SonarQube') {
-		            sh '''
-		                dotnet sonarscanner end \
-		                    /d:sonar.token="${SONAR_TOKEN}"
-		            '''
+		            withCredentials([
+		                string(
+		                    credentialsId: 'sonarqube-token',
+		                    variable: 'SONAR_TOKEN'
+		                )
+		            ]) {
+		                sh '''
+		                    dotnet sonarscanner end \
+		                        /d:sonar.token="${SONAR_TOKEN}"
+		                '''
+		            }
 		        }
 		    }
 		}
