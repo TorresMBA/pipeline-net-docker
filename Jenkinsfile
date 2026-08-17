@@ -4,6 +4,7 @@ pipeline {
     environment {
 		APP_NAME = 'mercury'
 		IMAGE_TAG = "${BUILD_NUMBER}"
+		PATH = "/var/lib/jenkins/.dotnet/tools:${env.PATH}"
     }
 
     stages {
